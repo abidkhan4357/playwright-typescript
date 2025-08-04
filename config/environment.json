@@ -1,0 +1,35 @@
+{
+  "dev": {
+    "baseUrl": "https://automationexercise.com/",
+    "apiBaseUrl": "https://automationexercise.com/api/",
+    "defaultUser": {
+      "email": "billsmith123@gmail.com",
+      "password": "QATest1!"
+    },
+    "timeout": 30000,
+    "retries": 2,
+    "headless": false
+  },
+  "qa": {
+    "baseUrl": "https://automationexercise.com/",
+    "apiBaseUrl": "https://automationexercise.com/api/",
+    "defaultUser": {
+      "email": "billsmith123@gmail.com",
+      "password": "QATest1!"
+    },
+    "timeout": 30000,
+    "retries": 1,
+    "headless": false
+  },
+  "ci": {
+    "baseUrl": "https://automationexercise.com/",
+    "apiBaseUrl": "https://automationexercise.com/api/",
+    "defaultUser": {
+      "email": "billsmith123@gmail.com",
+      "password": "QATest1!"
+    },
+    "timeout": 60000,
+    "retries": 3,
+    "headless": true
+  }
+}
