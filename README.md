@@ -1,6 +1,6 @@
 # Playwright TypeScript Test Automation Framework
 
-A comprehensive test automation framework built with Playwright and TypeScript for both API and UI testing.
+A test automation framework built with Playwright and TypeScript for both API and UI testing.
 
 ## Features
 
