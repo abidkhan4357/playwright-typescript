@@ -56,6 +56,25 @@ View test results:
 npx playwright show-report
 ```
 
+## Docker Support
+
+Run tests in containerized environment:
+
+```bash
+# Build Docker image
+./scripts/docker-build.sh
+
+# Run all tests
+./scripts/docker-run.sh
+
+# Run specific test types
+./scripts/docker-run.sh --type api
+./scripts/docker-run.sh --type ui
+
+# Run with Docker Compose
+docker-compose run --rm playwright-tests
+```
+
 ## Configuration
 
 Environment settings are managed in `config/environment.json`. Update base URLs and credentials as needed for different environments.

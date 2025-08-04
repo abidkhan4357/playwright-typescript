@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  playwright-tests:
+    build: .
+    container_name: playwright-tests
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: npx playwright test
+    
+  playwright-api-tests:
+    build: .
+    container_name: playwright-api-tests
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: npx playwright test api-tests/
+    
+  playwright-ui-tests:
+    build: .
+    container_name: playwright-ui-tests
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: npx playwright test ui-tests/
+    
+  playwright-headed:
+    build: .
+    container_name: playwright-headed
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    environment:
+      - NODE_ENV=test
+      - DISPLAY=${DISPLAY}
+      - CI=false
+    command: npx playwright test --headed
+    network_mode: host
