@@ -8,7 +8,13 @@
     },
     "timeout": 30000,
     "retries": 2,
-    "headless": false
+    "headless": false,
+    "redis": {
+      "host": "localhost",
+      "port": 6379,
+      "enabled": true,
+      "poolMinThreshold": 5
+    }
   },
   "qa": {
     "baseUrl": "https://automationexercise.com/",
@@ -19,7 +25,13 @@
     },
     "timeout": 30000,
     "retries": 1,
-    "headless": false
+    "headless": false,
+    "redis": {
+      "host": "localhost",
+      "port": 6379,
+      "enabled": true,
+      "poolMinThreshold": 5
+    }
   },
   "ci": {
     "baseUrl": "https://automationexercise.com/",
@@ -30,6 +42,12 @@
     },
     "timeout": 60000,
     "retries": 3,
-    "headless": true
+    "headless": true,
+    "redis": {
+      "host": "redis",
+      "port": 6379,
+      "enabled": true,
+      "poolMinThreshold": 10
+    }
   }
 }

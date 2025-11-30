@@ -28,11 +28,11 @@ export interface CreateUserRequest {
 
 export class UserService extends ApiClient {
     async login(loginData: LoginRequest): Promise<ApiResponse<AutomationExerciseResponse>> {
-        return this.postForm<AutomationExerciseResponse>('verifyLogin', loginData as Record<string, unknown>);
+        return this.postForm<AutomationExerciseResponse>('verifyLogin', loginData as unknown as Record<string, unknown>);
     }
 
     async createUser(userData: CreateUserRequest): Promise<ApiResponse<AutomationExerciseResponse>> {
-        return this.postForm<AutomationExerciseResponse>('createAccount', userData as Record<string, unknown>);
+        return this.postForm<AutomationExerciseResponse>('createAccount', userData as unknown as Record<string, unknown>);
     }
 
     async deleteAccount(email: string, password: string): Promise<ApiResponse<AutomationExerciseResponse>> {

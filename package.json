@@ -9,7 +9,12 @@
     "test:api": "playwright test api-tests/",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "redis:start": "docker-compose up -d redis",
+    "redis:stop": "docker-compose stop redis",
+    "pool:seed": "npx ts-node scripts/seed-pools.ts",
+    "pool:status": "npx ts-node scripts/pool-status.ts",
+    "pool:cleanup": "npx ts-node scripts/pool-cleanup.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,5 +23,8 @@
     "@faker-js/faker": "^9.9.0",
     "@playwright/test": "^1.54.2",
     "@types/node": "^24.2.0"
+  },
+  "dependencies": {
+    "ioredis": "^5.8.2"
   }
 }

@@ -37,8 +37,16 @@ export class ApiClient {
     }
 
     async postForm<T = unknown>(endpoint: string, formData: Record<string, unknown>): Promise<ApiResponse<T>> {
+        const form: Record<string, string | number | boolean> = {};
+        for (const [key, value] of Object.entries(formData)) {
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                form[key] = value;
+            } else if (value !== null && value !== undefined) {
+                form[key] = String(value);
+            }
+        }
         const response = await this.request.post(endpoint, {
-            form: formData,
+            form,
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         return this.handleResponse<T>(response);

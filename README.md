@@ -56,23 +56,62 @@ View test results:
 npx playwright show-report
 ```
 
+## Redis Test Data Pools
+
+Pre-seeded test data pools for parallel test execution without data conflicts.
+
+### Setup
+
+```bash
+# Start Redis
+docker compose up -d redis
+
+# Seed pools
+npm run pool:seed
+```
+
+### How It Works
+
+| Pool | Purpose | Pattern |
+|------|---------|---------|
+| `users:fresh` | Signup tests | Consume (one-time use) |
+| `users:registered` | Login/checkout tests | Acquire/Release (reusable) |
+
+### Commands
+
+```bash
+npm run pool:seed      # Refill pools when low
+npm run pool:status    # Check pool levels
+npm run pool:cleanup   # Recover stale data
+```
+
+### Usage in Tests
+
+```typescript
+// Signup test - user consumed, not returned
+const user = await pool.consumeFreshUser();
+
+// Login test - user borrowed, auto-returned after test
+const user = await pool.acquireRegisteredUser();
+```
+
+Falls back to API-based data creation if Redis unavailable.
+
 ## Docker Support
 
 Run tests in containerized environment:
 
 ```bash
-# Build Docker image
-./scripts/docker-build.sh
-
-# Run all tests
-./scripts/docker-run.sh
+# Start Redis + run all tests
+docker compose up -d redis
+docker compose run --rm playwright-tests
 
 # Run specific test types
-./scripts/docker-run.sh --type api
-./scripts/docker-run.sh --type ui
+docker compose run --rm playwright-api-tests
+docker compose run --rm playwright-ui-tests
 
-# Run with Docker Compose
-docker-compose run --rm playwright-tests
+# Run headed (with display)
+docker compose run --rm playwright-headed
 ```
 
 ## Configuration

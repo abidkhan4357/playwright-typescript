@@ -8,6 +8,7 @@ import { CheckoutPage } from '../../pages/checkout.page';
 import { PaymentPage } from '../../pages/payment.page';
 import { OrderConfirmationPage } from '../../pages/order-confirmation.page';
 import { UserService } from '../api/services/user.service';
+import { PoolManager, TestUser, PoolName } from '../data/providers';
 
 const blockedDomains = [
     'googleads.g.doubleclick.net',
@@ -29,6 +30,12 @@ async function blockAds(page: Page): Promise<void> {
     });
 }
 
+interface PoolFixture {
+    consumeFreshUser: () => Promise<TestUser | null>;
+    acquireRegisteredUser: () => Promise<TestUser | null>;
+    releaseRegisteredUser: (user: TestUser) => Promise<void>;
+}
+
 export const test = base.extend<{
     loginPage: LoginPage;
     homePage: HomePage;
@@ -39,6 +46,7 @@ export const test = base.extend<{
     paymentPage: PaymentPage;
     orderConfirmationPage: OrderConfirmationPage;
     userService: UserService;
+    pool: PoolFixture;
 }>({
     page: async ({ page }, use) => {
         await blockAds(page);
@@ -72,7 +80,38 @@ export const test = base.extend<{
         const userService = new UserService();
         await userService.init();
         await use(userService);
+    },
+    pool: async ({}, use) => {
+        const poolManager = PoolManager.getInstance();
+        const acquiredRegisteredUsers: TestUser[] = [];
+
+        const fixture: PoolFixture = {
+            consumeFreshUser: async () => {
+                return poolManager.consumeUser(PoolName.USERS_FRESH);
+            },
+            acquireRegisteredUser: async () => {
+                const user = await poolManager.acquireUser(PoolName.USERS_REGISTERED);
+                if (user) {
+                    acquiredRegisteredUsers.push(user);
+                }
+                return user;
+            },
+            releaseRegisteredUser: async (user: TestUser) => {
+                await poolManager.releaseUser(PoolName.USERS_REGISTERED, user);
+                const index = acquiredRegisteredUsers.findIndex(u => u.email === user.email);
+                if (index !== -1) {
+                    acquiredRegisteredUsers.splice(index, 1);
+                }
+            }
+        };
+
+        await use(fixture);
+
+        for (const user of acquiredRegisteredUsers) {
+            await poolManager.releaseUser(PoolName.USERS_REGISTERED, user);
+        }
     }
 });
 
 export { expect } from '@playwright/test';
+export { PoolName } from '../data/providers';
