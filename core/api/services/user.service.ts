@@ -1,65 +1,45 @@
-import { ApiClient } from '../api.client';
-import { LoginRequest, UserResponse } from '../../models/user.model';
+import { ApiClient, ApiResponse } from '../api.client';
+import { LoginRequest } from '../../models/user.model';
 
-/**
- * User API service for login and user management operations
- * Provides methods for all user-related API calls
- */
+export interface AutomationExerciseResponse {
+    responseCode: number;
+    message: string;
+}
+
+export interface CreateUserRequest {
+    name: string;
+    email: string;
+    password: string;
+    title: string;
+    birth_date: string;
+    birth_month: string;
+    birth_year: string;
+    firstname: string;
+    lastname: string;
+    company?: string;
+    address1: string;
+    address2?: string;
+    country: string;
+    zipcode: string;
+    state: string;
+    city: string;
+    mobile_number: string;
+}
+
 export class UserService extends ApiClient {
-    /**
-     * Verify user login
-     * @param loginData - Login credentials
-     * @returns API response
-     */
-    async login(loginData: LoginRequest): Promise<UserResponse> {
-        return this.postForm('verifyLogin', loginData);
+    async login(loginData: LoginRequest): Promise<ApiResponse<AutomationExerciseResponse>> {
+        return this.postForm<AutomationExerciseResponse>('verifyLogin', loginData as Record<string, unknown>);
     }
 
-    /**
-     * Get user account details
-     * @param userId - User ID
-     * @returns User details
-     */
-    async getUserDetails(userId: string): Promise<UserResponse> {
-        return this.get(`user/${userId}`);
+    async createUser(userData: CreateUserRequest): Promise<ApiResponse<AutomationExerciseResponse>> {
+        return this.postForm<AutomationExerciseResponse>('createAccount', userData as Record<string, unknown>);
     }
 
-    /**
-     * Create new user account
-     * @param userData - User registration data
-     * @returns Created user
-     */
-    async createUser(userData: any): Promise<UserResponse> {
-        return this.postForm('createAccount', userData);
+    async deleteAccount(email: string, password: string): Promise<ApiResponse<AutomationExerciseResponse>> {
+        return this.deleteForm<AutomationExerciseResponse>('deleteAccount', { email, password });
     }
 
-    /**
-     * Update user information
-     * @param userId - User ID
-     * @param userData - Updated user data
-     * @returns Updated user
-     */
-    async updateUser(userId: string, userData: any): Promise<UserResponse> {
-        return this.put(`user/${userId}`, userData);
-    }
-
-    /**
-     * Delete user account
-     * @param userId - User ID
-     * @returns Delete confirmation
-     */
-    async deleteUser(userId: string): Promise<any> {
-        return this.delete(`user/${userId}`);
-    }
-
-    /**
-     * Delete account using email and password
-     * @param email - User email
-     * @param password - User password
-     * @returns Delete confirmation
-     */
-    async deleteAccount(email: string, password: string): Promise<any> {
-        // Using deleteWithParams to send parameters as query params, not in body
-        return this.deleteWithParams('deleteAccount', { email, password });
+    async getUserByEmail(email: string): Promise<ApiResponse<AutomationExerciseResponse>> {
+        return this.get<AutomationExerciseResponse>('getUserDetailByEmail', { email });
     }
 }

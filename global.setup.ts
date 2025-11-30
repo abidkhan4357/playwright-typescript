@@ -33,24 +33,14 @@ async function globalSetup() {
     await page.fill('[data-qa="login-email"]', validUser.email);
     await page.fill('[data-qa="login-password"]', validUser.password);
     
-    // Click login button and wait for URL to change or logout button to appear
-    await Promise.all([
-      page.click('[data-qa="login-button"]'),
-      // Use page evaluate for browser context operations
-      page.waitForFunction(`
-        (currentUrl) => {
-          // Either the URL changes from login page or the Logout button appears
-          return window.location.href !== currentUrl || 
-                 document.querySelector('a:has-text("Logout")') !== null;
-        }
-      `, page.url(), { timeout: 20000 })
-    ]);
-    
-    // Give the page a moment to settle
-    await page.waitForTimeout(2000);
-    
-    // Check if login was successful by looking for the Logout link
-    const isLoggedIn = await page.isVisible('a:has-text("Logout")');
+    // Click login button and wait for logout link to appear (indicates successful login)
+    await page.click('[data-qa="login-button"]');
+
+    // Wait for logout link to be visible - this confirms successful authentication
+    const logoutLink = page.getByRole('link', { name: 'Logout' });
+    await logoutLink.waitFor({ state: 'visible', timeout: 20000 });
+
+    const isLoggedIn = await logoutLink.isVisible();
     
     if (isLoggedIn) {
       console.log('Authentication successful');

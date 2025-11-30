@@ -13,32 +13,33 @@ export interface Product {
     };
 }
 
+interface ProductListResponse {
+    responseCode: number;
+    products: Product[];
+}
+
 export class ProductFactory {
     private products: Product[] = [];
     private initialized: boolean = false;
     private apiClient: ApiClient;
-    
+
     constructor() {
         this.apiClient = new ApiClient();
     }
-    
+
     async getAllProductListByApi(): Promise<Product[]> {
         if (this.initialized) return this.products;
-        
+
         await this.apiClient.init();
-        
-        const response = await this.apiClient.get('productsList');
-        
-        if (response.body && typeof response.body === 'string') {
-            const parsedBody = JSON.parse(response.body);
-            
-            if (parsedBody.responseCode === 200 && parsedBody.products) {
-                this.products = parsedBody.products;
-                this.initialized = true;
-                return this.products;
-            }
+
+        const response = await this.apiClient.get<ProductListResponse>('productsList');
+
+        if (response.data.responseCode === 200 && response.data.products) {
+            this.products = response.data.products;
+            this.initialized = true;
+            return this.products;
         }
-        
+
         throw new Error('Could not retrieve products from API');
     }
 }
