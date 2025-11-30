@@ -102,8 +102,16 @@ Falls back to API-based data creation if Redis unavailable.
 Run tests in containerized environment:
 
 ```bash
+# Start Redis + run all tests
 docker compose up -d redis
 docker compose run --rm playwright-tests
+
+# Run specific test types
+docker compose run --rm playwright-api-tests
+docker compose run --rm playwright-ui-tests
+
+# Run headed (with display)
+docker compose run --rm playwright-headed
 ```
 
 ## Configuration
