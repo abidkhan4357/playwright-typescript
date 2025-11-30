@@ -24,12 +24,20 @@ export class PoolManager {
         return PoolManager.instance;
     }
 
-    async acquireUser(poolName: PoolName = PoolName.USERS_FRESH): Promise<TestUser | null> {
+    async acquireUser(poolName: PoolName = PoolName.USERS_REGISTERED): Promise<TestUser | null> {
         return this.provider.acquire<TestUser>(poolName);
+    }
+
+    async consumeUser(poolName: PoolName = PoolName.USERS_FRESH): Promise<TestUser | null> {
+        return this.provider.consume<TestUser>(poolName);
     }
 
     async releaseUser(poolName: PoolName, user: TestUser): Promise<void> {
         await this.provider.release(poolName, user);
+    }
+
+    async transferUser(fromPool: PoolName, toPool: PoolName, user: TestUser): Promise<void> {
+        await this.provider.transfer(fromPool, toPool, user);
     }
 
     async getStats(poolName: PoolName): Promise<PoolStats> {

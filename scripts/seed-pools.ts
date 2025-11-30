@@ -5,29 +5,36 @@ import { UserService, CreateUserRequest } from '../core/api/services/user.servic
 interface SeedConfig {
     poolName: PoolName;
     targetCount: number;
+    minThreshold: number;
     createRegistered: boolean;
 }
 
 const SEED_CONFIGS: SeedConfig[] = [
-    { poolName: PoolName.USERS_FRESH, targetCount: 20, createRegistered: false },
-    { poolName: PoolName.USERS_REGISTERED, targetCount: 10, createRegistered: true }
+    { poolName: PoolName.USERS_FRESH, targetCount: 50, minThreshold: 10, createRegistered: false },
+    { poolName: PoolName.USERS_REGISTERED, targetCount: 20, minThreshold: 5, createRegistered: true }
 ];
 
 async function seedPool(
     provider: RedisPoolProvider,
     userService: UserService,
     userFactory: UserFactory,
-    config: SeedConfig
+    config: SeedConfig,
+    force: boolean
 ): Promise<number> {
     const stats = await provider.getStats(config.poolName);
-    const needed = config.targetCount - stats.available;
 
-    if (needed <= 0) {
-        console.log(`[${config.poolName}] Already has ${stats.available} items, skipping`);
+    if (!force && stats.available >= config.minThreshold) {
+        console.log(`[${config.poolName}] Has ${stats.available} items (threshold: ${config.minThreshold}), skipping`);
         return 0;
     }
 
-    console.log(`[${config.poolName}] Seeding ${needed} items...`);
+    const needed = config.targetCount - stats.available;
+    if (needed <= 0) {
+        console.log(`[${config.poolName}] Already at target (${stats.available}/${config.targetCount})`);
+        return 0;
+    }
+
+    console.log(`[${config.poolName}] Seeding ${needed} items (current: ${stats.available}, target: ${config.targetCount})...`);
 
     const users: TestUser[] = [];
 
@@ -64,16 +71,20 @@ async function seedPool(
                 const response = await userService.createUser(createRequest);
                 if (response.data.responseCode === 201) {
                     users.push(testUser);
-                    console.log(`  Created registered user: ${testUser.email}`);
+                    process.stdout.write('.');
                 } else {
-                    console.log(`  Failed to register: ${testUser.email} - ${response.data.message}`);
+                    process.stdout.write('x');
                 }
-            } catch (error) {
-                console.log(`  Error creating user: ${testUser.email}`);
+            } catch {
+                process.stdout.write('x');
             }
         } else {
             users.push(testUser);
         }
+    }
+
+    if (config.createRegistered) {
+        console.log();
     }
 
     if (users.length > 0) {
@@ -85,7 +96,12 @@ async function seedPool(
 }
 
 async function main(): Promise<void> {
+    const force = process.argv.includes('--force');
+
     console.log('=== Redis Pool Seeding ===\n');
+    if (force) {
+        console.log('Force mode: Seeding to target regardless of threshold\n');
+    }
 
     const provider = new RedisPoolProvider({
         host: process.env.REDIS_HOST || 'localhost',
@@ -95,7 +111,7 @@ async function main(): Promise<void> {
     const isConnected = await provider.isAvailable();
     if (!isConnected) {
         console.error('Cannot connect to Redis. Is it running?');
-        console.log('Start Redis with: docker-compose up -d redis');
+        console.log('Start Redis with: npm run redis:start');
         process.exit(1);
     }
 
@@ -106,15 +122,17 @@ async function main(): Promise<void> {
     let totalSeeded = 0;
 
     for (const config of SEED_CONFIGS) {
-        const seeded = await seedPool(provider, userService, userFactory, config);
+        const seeded = await seedPool(provider, userService, userFactory, config, force);
         totalSeeded += seeded;
     }
 
-    console.log(`\n=== Seeding Complete: ${totalSeeded} total items ===\n`);
+    console.log(`\n=== Summary ===\n`);
+    console.log(`Seeded: ${totalSeeded} items\n`);
 
     for (const config of SEED_CONFIGS) {
         const stats = await provider.getStats(config.poolName);
-        console.log(`${config.poolName}: ${stats.available} available`);
+        const status = stats.available < config.minThreshold ? '⚠️ LOW' : '✓';
+        console.log(`${config.poolName}: ${stats.available} available ${status}`);
     }
 
     await provider.close();

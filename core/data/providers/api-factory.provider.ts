@@ -68,8 +68,16 @@ export class ApiFactoryProvider implements TestDataProvider {
         return null;
     }
 
+    async consume<T>(poolName: string): Promise<T | null> {
+        return this.acquire<T>(poolName);
+    }
+
     async release<T>(_poolName: string, _data: T): Promise<void> {
         // API provider doesn't maintain pools - data is ephemeral
+    }
+
+    async transfer<T>(_fromPool: string, _toPool: string, _data: T): Promise<void> {
+        // API provider doesn't maintain pools - no transfer needed
     }
 
     async getStats(_poolName: string): Promise<PoolStats> {

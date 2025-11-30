@@ -31,8 +31,9 @@ async function blockAds(page: Page): Promise<void> {
 }
 
 interface PoolFixture {
-    acquireUser: (poolName?: PoolName) => Promise<TestUser | null>;
-    releaseUser: (poolName: PoolName, user: TestUser) => Promise<void>;
+    consumeFreshUser: () => Promise<TestUser | null>;
+    acquireRegisteredUser: () => Promise<TestUser | null>;
+    releaseRegisteredUser: (user: TestUser) => Promise<void>;
 }
 
 export const test = base.extend<{
@@ -82,31 +83,32 @@ export const test = base.extend<{
     },
     pool: async ({}, use) => {
         const poolManager = PoolManager.getInstance();
-        const acquiredUsers: Array<{ poolName: PoolName; user: TestUser }> = [];
+        const acquiredRegisteredUsers: TestUser[] = [];
 
         const fixture: PoolFixture = {
-            acquireUser: async (poolName = PoolName.USERS_FRESH) => {
-                const user = await poolManager.acquireUser(poolName);
+            consumeFreshUser: async () => {
+                return poolManager.consumeUser(PoolName.USERS_FRESH);
+            },
+            acquireRegisteredUser: async () => {
+                const user = await poolManager.acquireUser(PoolName.USERS_REGISTERED);
                 if (user) {
-                    acquiredUsers.push({ poolName, user });
+                    acquiredRegisteredUsers.push(user);
                 }
                 return user;
             },
-            releaseUser: async (poolName: PoolName, user: TestUser) => {
-                await poolManager.releaseUser(poolName, user);
-                const index = acquiredUsers.findIndex(
-                    a => a.user.email === user.email && a.poolName === poolName
-                );
+            releaseRegisteredUser: async (user: TestUser) => {
+                await poolManager.releaseUser(PoolName.USERS_REGISTERED, user);
+                const index = acquiredRegisteredUsers.findIndex(u => u.email === user.email);
                 if (index !== -1) {
-                    acquiredUsers.splice(index, 1);
+                    acquiredRegisteredUsers.splice(index, 1);
                 }
             }
         };
 
         await use(fixture);
 
-        for (const { poolName, user } of acquiredUsers) {
-            await poolManager.releaseUser(poolName, user);
+        for (const user of acquiredRegisteredUsers) {
+            await poolManager.releaseUser(PoolName.USERS_REGISTERED, user);
         }
     }
 });

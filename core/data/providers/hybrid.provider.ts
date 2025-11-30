@@ -45,12 +45,32 @@ export class HybridProvider implements TestDataProvider {
         return data;
     }
 
+    async consume<T>(poolName: string): Promise<T | null> {
+        await this.ensureInitialized();
+
+        if (this.redisAvailable) {
+            const data = await this.redisProvider.consume<T>(poolName);
+            if (data) {
+                return data;
+            }
+        }
+
+        return this.apiProvider.consume<T>(poolName);
+    }
+
     async release<T>(poolName: string, data: T): Promise<void> {
         await this.ensureInitialized();
 
         if (this.redisAvailable) {
             await this.redisProvider.release(poolName, data);
-            console.log(`[HybridProvider] Released back to Redis pool: ${poolName}`);
+        }
+    }
+
+    async transfer<T>(fromPool: string, toPool: string, data: T): Promise<void> {
+        await this.ensureInitialized();
+
+        if (this.redisAvailable) {
+            await this.redisProvider.transfer(fromPool, toPool, data);
         }
     }
 

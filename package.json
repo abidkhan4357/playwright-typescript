@@ -13,7 +13,8 @@
     "redis:start": "docker-compose up -d redis",
     "redis:stop": "docker-compose stop redis",
     "pool:seed": "npx ts-node scripts/seed-pools.ts",
-    "pool:status": "npx ts-node scripts/pool-status.ts"
+    "pool:status": "npx ts-node scripts/pool-status.ts",
+    "pool:cleanup": "npx ts-node scripts/pool-cleanup.ts"
   },
   "keywords": [],
   "author": "",

@@ -78,6 +78,17 @@ export class RedisPoolProvider implements TestDataProvider {
         }
     }
 
+    async transfer<T>(fromPool: string, toPool: string, data: T): Promise<void> {
+        const fromKey = this.getPoolKey(fromPool);
+        const toKey = this.getPoolKey(toPool);
+        const processingKey = this.getProcessingKey(fromPool);
+        const serialized = JSON.stringify(data);
+
+        await this.client.lrem(processingKey, 1, serialized);
+        await this.client.lrem(fromKey, 1, serialized);
+        await this.client.lpush(toKey, serialized);
+    }
+
     async seed<T>(poolName: string, items: T[]): Promise<number> {
         if (items.length === 0) return 0;
 
