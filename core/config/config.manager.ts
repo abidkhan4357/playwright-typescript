@@ -58,11 +58,15 @@ export class ConfigManager {
         return this.config.timeout || 30000;
     }
 
-    /**
-     * Get value from configuration by key
-     * @param key - Configuration key
-     * @param defaultValue - Default value if key is not found
-     */
+    get redisConfig(): { host: string; port: number; enabled: boolean; poolMinThreshold: number } {
+        return {
+            host: this.config.redis?.host || 'localhost',
+            port: this.config.redis?.port || 6379,
+            enabled: this.config.redis?.enabled ?? true,
+            poolMinThreshold: this.config.redis?.poolMinThreshold || 5
+        };
+    }
+
     get<T>(key: string, defaultValue?: T): T {
         const keys = key.split('.');
         let value: any = this.config;

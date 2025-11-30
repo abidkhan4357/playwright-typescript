@@ -1,13 +1,41 @@
 import { Browser, chromium, BrowserContext, Page } from '@playwright/test';
 import { ConfigManager } from './core/config/config.manager';
 import { UserFactory } from './core/data/factories/user.factory';
+import { PoolManager } from './core/data/providers';
+import { PoolName } from './core/data/providers/test-data.provider';
+
+async function checkAndSeedPools(): Promise<void> {
+  const config = ConfigManager.getInstance();
+  const redisConfig = config.redisConfig;
+
+  if (!redisConfig.enabled) {
+    console.log('Redis pools disabled, skipping pool check');
+    return;
+  }
+
+  try {
+    const poolManager = PoolManager.getInstance();
+    const stats = await poolManager.getStats(PoolName.USERS_FRESH);
+
+    console.log(`Pool status - Available: ${stats.available}, Processing: ${stats.processing}`);
+
+    if (stats.available < redisConfig.poolMinThreshold) {
+      console.log(`Pool below threshold (${redisConfig.poolMinThreshold}), consider running: npm run pool:seed`);
+    }
+
+    await poolManager.close();
+  } catch (error) {
+    console.log('Redis not available, tests will use API fallback');
+  }
+}
 
 async function globalSetup() {
-  // Get configuration
   const configManager = ConfigManager.getInstance();
   const userFactory = new UserFactory();
   const validUser = userFactory.generate('validUser');
   const baseUrl = configManager.baseUrl;
+
+  await checkAndSeedPools();
   
   console.log(`Using baseUrl: ${baseUrl}`);
   
