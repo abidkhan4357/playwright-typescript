@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base, Page } from '@playwright/test';
 import { LoginPage } from '../../pages/login.page';
 import { HomePage } from '../../pages/home.page';
 import { SignupPage } from '../../pages/signup.page';
@@ -9,10 +9,26 @@ import { PaymentPage } from '../../pages/payment.page';
 import { OrderConfirmationPage } from '../../pages/order-confirmation.page';
 import { UserService } from '../api/services/user.service';
 
-/**
- * Extended test fixture that provides page objects
- * Makes pages available in tests via destructuring
- */
+const blockedDomains = [
+    'googleads.g.doubleclick.net',
+    'pagead2.googlesyndication.com',
+    'adservice.google.com',
+    'www.googletagservices.com',
+    'google-analytics.com',
+    'analytics.google.com'
+];
+
+async function blockAds(page: Page): Promise<void> {
+    await page.route('**/*', (route) => {
+        const url = route.request().url();
+        if (blockedDomains.some(domain => url.includes(domain))) {
+            route.abort();
+        } else {
+            route.continue();
+        }
+    });
+}
+
 export const test = base.extend<{
     loginPage: LoginPage;
     homePage: HomePage;
@@ -24,48 +40,34 @@ export const test = base.extend<{
     orderConfirmationPage: OrderConfirmationPage;
     userService: UserService;
 }>({
-    // Define login page fixture
+    page: async ({ page }, use) => {
+        await blockAds(page);
+        await use(page);
+    },
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },
-
-    // Define home page fixture
     homePage: async ({ page }, use) => {
-        // Create HomePage when implemented
         await use(new HomePage(page));
     },
-
-    // Define signup page fixture
     signupPage: async ({ page }, use) => {
         await use(new SignupPage(page));
     },
-    
-    // Define product page fixture
     productPage: async ({ page }, use) => {
         await use(new ProductPage(page));
     },
-    
-    // Define cart page fixture
     cartPage: async ({ page }, use) => {
         await use(new CartPage(page));
     },
-    
-    // Define checkout page fixture
     checkoutPage: async ({ page }, use) => {
         await use(new CheckoutPage(page));
     },
-    
-    // Define payment page fixture
     paymentPage: async ({ page }, use) => {
         await use(new PaymentPage(page));
     },
-    
-    // Define order confirmation page fixture
     orderConfirmationPage: async ({ page }, use) => {
         await use(new OrderConfirmationPage(page));
     },
-    
-    // Define user service API fixture
     userService: async ({}, use) => {
         const userService = new UserService();
         await userService.init();
@@ -73,5 +75,4 @@ export const test = base.extend<{
     }
 });
 
-// Export the expect function for assertions
 export { expect } from '@playwright/test';
